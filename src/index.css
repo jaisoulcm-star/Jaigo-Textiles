@@ -1,0 +1,141 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Montserrat", sans-serif;
+
+  --color-heritage-cream: #fdfbf7;
+  --color-heritage-maroon: #4c1d1d;
+  --color-heritage-gold: #c4a456;
+  --color-heritage-gold-light: #efcc7d;
+  --color-heritage-olive: #334155;
+  --color-heritage-ink: #1c1917;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    background-color: #fdfbf7;
+  }
+
+  body {
+    @apply bg-heritage-cream text-stone-800 font-sans antialiased selection:bg-heritage-gold selection:text-white transition-colors duration-300;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif font-bold tracking-tight text-stone-900;
+  }
+}
+
+/* Custom Unique Utilities */
+
+.zari-text {
+  color: #c4a456; /* SOLID FALLBACK */
+  background: linear-gradient(
+    to right,
+    #c4a456 0%,
+    #efcc7d 25%,
+    #fff8e1 50%,
+    #efcc7d 75%,
+    #c4a456 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shine 3s linear infinite;
+  text-shadow: 0 0 30px rgba(196, 164, 86, 0.1);
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.saree-border-top {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 10px,
+      rgba(196, 164, 86, 0.3) 10px,
+      rgba(196, 164, 86, 0.3) 11px
+    ),
+    linear-gradient(to right, var(--color-heritage-maroon), #1e293b);
+  height: 8px;
+  width: 100%;
+}
+
+.silk-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  pointer-events: none;
+}
+
+.boutique-frame {
+  @apply relative p-1;
+  background: linear-gradient(
+    45deg,
+    var(--color-heritage-gold),
+    transparent,
+    var(--color-heritage-gold)
+  );
+  background-size: 200% 200%;
+  animation: border-flow 6s ease infinite;
+}
+
+@keyframes border-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.vertical-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+.glass-nav {
+  @apply bg-white/80 backdrop-blur-xl border-b border-heritage-gold/20;
+}
+
+.saree-pattern {
+  background-image: radial-gradient(
+    var(--color-heritage-gold) 0.5px,
+    transparent 0.5px
+  );
+  background-size: 24px 24px;
+  opacity: 0.2;
+}
+
+.silk-gradient {
+  background: linear-gradient(135deg, var(--color-heritage-maroon) 0%, #1e0a0a 100%);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

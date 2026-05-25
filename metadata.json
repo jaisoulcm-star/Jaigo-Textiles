@@ -1,0 +1,9 @@
+{
+  "name": "Jaigo Textiles",
+  "description": "Premium heritage saree e-commerce platform with a sophisticated dark aesthetic, celebrating traditional Tamil Nadu weaving arts like Kanchipuram silk and Chettinad cotton.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
