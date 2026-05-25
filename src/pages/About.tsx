@@ -9,13 +9,17 @@ export const About: React.FC = () => {
       {/* Hero */}
       <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1610030469668-8096333908f9?q=80&w=2600&auto=format&fit=crop"
+          src={HERITAGE_IMAGES.STORY_HERO}
           className="absolute inset-0 w-full h-full object-cover"
           alt="Tamil Nadu Heritage Landscape"
           referrerPolicy="no-referrer"
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://images.unsplash.com/photo-1610030469668-8096333908f9?q=80&w=2600&auto=format&fit=crop";
+          }}
         />
-        <div className="absolute inset-0 bg-stone-900/40 mix-blend-multiply" />
-        <div className="absolute inset-0 bg-gradient-to-t from-heritage-cream via-transparent to-stone-900/30" />
+        <div className="absolute inset-0 bg-stone-900/35 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-t from-heritage-cream via-transparent to-stone-900/20" />
         
         <div className="relative z-10 text-center text-white px-4">
           <motion.h1

@@ -44,42 +44,15 @@ export const Products: React.FC = () => {
         const snapshot = await getDocs(q);
         let data: Product[] = [];
         if (!snapshot.empty) {
-          data = snapshot.docs.map((doc) => {
-            const docData = doc.data();
-            let createdAt = new Date();
-            if (docData.createdAt) {
-              if (typeof docData.createdAt.toDate === "function") {
-                createdAt = docData.createdAt.toDate();
-              } else {
-                createdAt = new Date(docData.createdAt);
-              }
-            }
-            return {
-              id: doc.id,
-              ...docData,
-              createdAt,
-            };
-          }) as Product[];
+          data = []; // Products cleared per user request
         } else {
-          // Fallback to mock data
-          const { MOCK_PRODUCTS } = await import("../constants");
-          const cat = searchParams.get("cat") || "All";
-          data = (MOCK_PRODUCTS as Product[]).filter((p) =>
-            cat === "All" ? true : p.category === cat,
-          );
+          // Fallback to mock data (cleared per user request)
+          data = [];
         }
         setProducts(data);
       } catch (error) {
         console.warn("DB Fetch failed, attempting mock data");
-        try {
-          const { MOCK_PRODUCTS } = await import("../constants");
-          const cat = searchParams.get("cat") || "All";
-          setProducts(
-            (MOCK_PRODUCTS as Product[]).filter((p) =>
-              cat === "All" ? true : p.category === cat,
-            ),
-          );
-        } catch (e) {}
+        setProducts([]);
       } finally {
         setLoading(false);
       }

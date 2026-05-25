@@ -18,6 +18,31 @@ import { DecorativeBorder } from "../components/DecorativeBorder";
 
 export const Home: React.FC = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Animation variants for "Distinctive Weaves" title letters
+  const titleContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.03,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const letterVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
+  };
+
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [accessoryProducts, setAccessoryProducts] = useState<Product[]>([]);
   const [recentProducts, setRecentProducts] = useState<Product[]>([]);
@@ -45,9 +70,7 @@ export const Home: React.FC = () => {
           allProducts = MOCK_PRODUCTS as Product[];
         }
 
-        setFeaturedProducts(
-          allProducts.filter((p) => p.category !== "Accessories").slice(0, 8),
-        );
+        setFeaturedProducts([]);
         setAccessoryProducts(
           allProducts.filter((p) => p.category === "Accessories").slice(0, 3),
         );
@@ -67,9 +90,7 @@ export const Home: React.FC = () => {
         try {
           const { MOCK_PRODUCTS } = await import("../constants");
           const allProducts = MOCK_PRODUCTS as Product[];
-          setFeaturedProducts(
-            allProducts.filter((p) => p.category !== "Accessories").slice(0, 8),
-          );
+          setFeaturedProducts([]);
           setAccessoryProducts(
             allProducts.filter((p) => p.category === "Accessories").slice(0, 3),
           );
@@ -119,24 +140,22 @@ export const Home: React.FC = () => {
           <div className="h-24 w-px bg-stone-300/30" />
         </div>
 
-        <div className="absolute inset-0 z-0">
-          <motion.img
-            initial={{ scale: 1.1, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 2 }}
-            src={HERITAGE_IMAGES.HERO}
-            alt="Tamil Nadu Saree Craftsmanship"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://images.unsplash.com/photo-1610030469668-8096333908f9?q=80&w=2600&auto=format&fit=crop";
-            }}
-            className="w-full h-full object-cover"
-          />
-          {/* Subtle overlay to enhance text readability */}
-          <div className="absolute inset-0 bg-stone-900/40 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-stone-950/60 via-transparent to-stone-950/20" />
-        </div>
+        <motion.img
+          initial={{ scale: 1.1, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 2 }}
+          src={HERITAGE_IMAGES.HERO}
+          alt="Tamil Nadu Saree Craftsmanship"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            e.currentTarget.src =
+              "https://images.unsplash.com/photo-1610030469668-8096333908f9?q=80&w=2600&auto=format&fit=crop";
+          }}
+          className="absolute inset-0 z-0 w-full h-full object-cover"
+        />
+        {/* Subtle overlay to enhance text readability */}
+        <div className="absolute inset-0 bg-stone-900/30 mix-blend-multiply z-0" />
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/50 via-transparent to-stone-950/10 z-0" />
 
         <div className="relative z-10 text-center px-4 max-w-7xl mx-auto w-full">
           <motion.div
@@ -274,12 +293,45 @@ export const Home: React.FC = () => {
       <section className="bg-white py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 space-y-24">
           <div className="text-center space-y-4">
-            <span className="text-heritage-gold uppercase tracking-[0.4em] text-[10px] font-bold">
+            <motion.span 
+              initial={{ opacity: 0, letterSpacing: "0.2em" }}
+              whileInView={{ opacity: 1, letterSpacing: "0.4em" }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+              className="text-heritage-gold uppercase text-[10px] font-bold block"
+            >
               Southern Classics
-            </span>
-            <h2 className="text-5xl md:text-7xl font-serif zari-text italic">
-              Distinctive Weaves
-            </h2>
+            </motion.span>
+            
+            <motion.h2 
+              variants={titleContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="text-5xl md:text-7xl font-serif zari-text italic flex justify-center flex-wrap gap-x-4"
+            >
+              {"Distinctive Weaves".split(" ").map((word, wordIdx) => (
+                <span key={wordIdx} className="inline-flex">
+                  {word.split("").map((letter, letterIdx) => (
+                    <motion.span
+                      key={letterIdx}
+                      variants={letterVariants}
+                      className="inline-block"
+                    >
+                      {letter}
+                    </motion.span>
+                  ))}
+                </span>
+              ))}
+            </motion.h2>
+
+            <motion.div 
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.6 }}
+              className="h-[1px] w-28 bg-gradient-to-r from-transparent via-heritage-gold to-transparent mx-auto mt-6 origin-center"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
@@ -317,13 +369,18 @@ export const Home: React.FC = () => {
             ].map((type, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="group space-y-6"
+                initial={{ opacity: 0, y: 50, scale: 0.98 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: idx * 0.1,
+                  ease: [0.16, 1, 0.3, 1] 
+                }}
+                whileHover={{ y: -8, scale: 1.01 }}
+                className="group space-y-6 cursor-pointer"
               >
-                <div className="aspect-[3/5] relative overflow-hidden rounded-t-[60px] rounded-b-[10px] boutique-frame bg-stone-100">
+                <div className="aspect-[3/5] relative overflow-hidden rounded-t-[60px] rounded-b-[10px] boutique-frame bg-stone-100 shadow-sm group-hover:shadow-lg transition-all duration-500">
                   <img
                     src={type.image}
                     referrerPolicy="no-referrer"
@@ -331,28 +388,23 @@ export const Home: React.FC = () => {
                       e.currentTarget.src =
                         "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop";
                     }}
-                    className={`w-full h-full object-cover transition-all duration-1000 ${
-                      type.title === "Kanchipuram Silk" 
-                        ? "scale-105 object-center" 
-                        : type.title === "Chettinad Cotton"
-                          ? "scale-105 object-center"
-                          : ["Madurai Sungudi", "Coimbatore Silk"].includes(type.title)
-                            ? "scale-110 object-center"
-                            : "group-hover:scale-110"
-                    }`}
+                    className="w-full h-full object-cover object-center scale-105 group-hover:scale-115 transition-transform duration-[1500ms] ease-out"
                     alt={type.title}
                   />
-                  <div className="absolute inset-0 bg-stone-100/20 opacity-20 group-hover:opacity-0 transition-opacity" />
-                  <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/20 to-transparent text-white translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
+                  <div className="absolute inset-0 bg-stone-100/10 opacity-25 group-hover:opacity-0 transition-opacity duration-500" />
+                  <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/40 via-black/10 to-transparent text-white translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500">
                     <span className="text-[10px] uppercase tracking-widest font-bold text-heritage-gold">
                       {type.origin}
                     </span>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-serif text-heritage-gold group-hover:text-heritage-maroon transition-colors">
-                    {type.title}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-2xl font-serif text-heritage-gold group-hover:text-heritage-maroon transition-colors duration-300">
+                      {type.title}
+                    </h3>
+                    <div className="h-[1px] w-0 bg-heritage-maroon/40 group-hover:w-8 transition-all duration-500" />
+                  </div>
                   <p className="text-sm text-stone-600 font-light leading-relaxed">
                     {type.desc}
                   </p>
@@ -424,32 +476,6 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Recently Viewed - Personalized Section */}
-      {recentProducts.length > 0 && (
-        <section className="py-24 bg-stone-50 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 mb-12">
-            <div className="flex items-center gap-6 mb-2">
-              <div className="h-px flex-grow bg-stone-200" />
-              <span className="text-heritage-gold uppercase tracking-[0.6em] text-[10px] font-black">
-                Personalized
-              </span>
-              <div className="h-px flex-grow bg-stone-200" />
-            </div>
-            <h2 className="text-4xl font-serif text-center italic text-stone-900 mb-12">
-              Recently <span className="text-heritage-maroon">Viewed</span>
-            </h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-8">
-              {recentProducts.map((product) => (
-                <div key={product.id} className="transform hover:-translate-y-1 transition-transform duration-500">
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* WhatsApp Community Section - "Between the website" */}
       <section className="py-24 bg-heritage-cream border-y border-stone-100">

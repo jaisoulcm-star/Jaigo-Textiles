@@ -2,10 +2,12 @@ import KANCHIPURAM_IMAGE from "./assets/images/regenerated_image_1777941209294.p
 import CHETTINAD_IMAGE from "./assets/images/regenerated_image_1778004429912.png";
 import MADURAI_IMAGE from "./assets/images/regenerated_image_1778007742069.png";
 import STORY_IMAGE from "./assets/images/story.png";
+import STORY_HERO_IMAGE from "./assets/images/story_heritage_watercolor_1779737444513.png";
 
 export const HERITAGE_IMAGES = {
   HERO: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&q=80&w=2600",
   STORY: STORY_IMAGE,
+  STORY_HERO: STORY_HERO_IMAGE,
   KANCHIPURAM_SILK: KANCHIPURAM_IMAGE,
   CHETTINAD_COTTON: CHETTINAD_IMAGE,
   MADURAI_SUNGUDI: MADURAI_IMAGE,
