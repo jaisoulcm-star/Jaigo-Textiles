@@ -139,12 +139,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setUser(firebaseUser);
       if (firebaseUser) {
-        // Restricted to specific admin emails
-        setIsAdmin(
-          ["jaigogroups@gmail.com", "venimurugesh@gmail.com"].includes(
-            firebaseUser.email || "",
-          ),
-        );
+        // Restricted to specific admin email
+        setIsAdmin(firebaseUser.email === "venimurugesh@gmail.com");
       } else {
         setIsAdmin(false);
         setAccessTokenState(null);
