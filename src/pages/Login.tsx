@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export const Login: React.FC = () => {
-  const { user, isAdmin, login, loginAsDemoUser, loading } = useAuth();
+  const { user, isAdmin, login, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || "/";
@@ -34,27 +34,14 @@ export const Login: React.FC = () => {
       const token = await login();
       if (!token) {
         setErrorMessage(
-          "Popup closed or blocked by the browser. If you are inside a high-security sandbox/iframe preview, please use the direct 'Demo Partner Bypass' buttons below to preview standard customer and administrator features."
+          "The sign-in popup was closed or blocked by your browser. Please allow popups for this site, or open this application in a new browser tab."
         );
       }
     } catch (error: any) {
       console.error("Login failed", error);
       setErrorMessage(
-        error?.message || "Google Sign-In was blocked or failed to initialize. Please use the Demo login options below, or open this application in a new browser tab."
+        error?.message || "Google Sign-In was blocked or failed to initialize. Please verify your connection, allow popups, or open this application in a new browser tab."
       );
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleDemoLogin = async (role: "admin" | "customer") => {
-    setErrorMessage(null);
-    setIsLoggingIn(true);
-    try {
-      await loginAsDemoUser(role);
-    } catch (error: any) {
-      console.error("Demo login failed", error);
-      setErrorMessage("Demo login failed to initialize. Please try again.");
     } finally {
       setIsLoggingIn(false);
     }
@@ -87,7 +74,7 @@ export const Login: React.FC = () => {
           >
             <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
             <div>
-              <p className="font-semibold text-stone-950 not-italic mb-1">Notice for Sandbox Previewers:</p>
+              <p className="font-semibold text-stone-950 not-italic mb-1">Authentication Notice:</p>
               {errorMessage}
             </div>
           </motion.div>
@@ -165,40 +152,6 @@ export const Login: React.FC = () => {
             </div>
           </motion.div>
         </div>
-
-        {/* Demo Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-12 bg-white rounded-3xl border border-stone-200/60 p-8 shadow-md text-center max-w-2xl mx-auto"
-        >
-          <div className="flex items-center justify-center gap-2 text-heritage-gold mb-3">
-            <Sparkles size={18} className="animate-pulse" />
-            <span className="text-[10px] tracking-[0.25em] uppercase font-bold text-stone-600">
-              Sandbox Playground & Demo Mode
-            </span>
-          </div>
-          <p className="text-xs text-stone-500 italic mb-6">
-            Instantly access pre-configured accounts without popup authentication or credentials. Ideal for testing administrative dashboard tools and purchase pipelines.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => handleDemoLogin("customer")}
-              disabled={isLoggingIn}
-              className="flex-1 bg-stone-50 hover:bg-heritage-maroon hover:text-white border border-stone-200 text-stone-700 font-bold uppercase tracking-wider text-[10px] py-4 px-6 rounded-xl transition-all hover:shadow-md"
-            >
-              🚀 Bypass as Demo Customer
-            </button>
-            <button
-              onClick={() => handleDemoLogin("admin")}
-              disabled={isLoggingIn}
-              className="flex-1 bg-mineral-gold/10 hover:bg-stone-900 hover:text-white border border-heritage-gold/30 text-heritage-gold font-bold uppercase tracking-wider text-[10px] py-4 px-6 rounded-xl transition-all hover:shadow-md"
-            >
-              👑 Bypass as Staff / Admin
-            </button>
-          </div>
-        </motion.div>
 
         <p className="text-center mt-12 text-stone-400 text-[10px] uppercase tracking-widest font-bold">
           Secured by Jaigo Heritage Authentication Systems

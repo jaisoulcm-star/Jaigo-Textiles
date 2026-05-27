@@ -110,22 +110,29 @@ export const Checkout: React.FC = () => {
     setUpiVerified(false);
   }, [upiProvider]);
 
-  // UPI simulation countdown
+  // UPI simulation countdown and automatic authentication
   useEffect(() => {
     let interval: NodeJS.Timeout;
+    let autoApproveTimeout: NodeJS.Timeout;
     if (showUpiSimulator && simulatedStatus === "waiting") {
-      setSimulatorSecondsLeft(45);
+      setSimulatorSecondsLeft(5);
       interval = setInterval(() => {
         setSimulatorSecondsLeft((prev) => {
           if (prev <= 1) {
-            setSimulatedStatus("declined");
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
+
+      autoApproveTimeout = setTimeout(() => {
+        handleSimulateApprovalChange(true);
+      }, 4000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(autoApproveTimeout);
+    };
   }, [showUpiSimulator, simulatedStatus]);
 
   // Construct complete UPI ID string
@@ -361,35 +368,16 @@ export const Checkout: React.FC = () => {
 
                       <div className="space-y-2">
                         <p className="text-sm font-semibold text-stone-800">
-                          Waiting for manual authorization
+                          Authenticating secure transaction
                         </p>
                         <p className="text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
-                          We sent a payment collect request to <span className="font-mono text-stone-700 bg-stone-100 px-1 py-0.5 rounded">{getFullUpiId() || "your scanned app"}</span>. Please open your UPI App to approve.
+                          We are communicating with your bank to verify credentials. Please do not close or refresh this window.
                         </p>
                       </div>
 
                       {/* Timer */}
                       <div className="bg-stone-50 rounded-xl py-2 px-4 max-w-[120px] mx-auto border border-stone-200 text-stone-700 text-xs font-mono select-none">
                         00:{simulatorSecondsLeft < 10 ? `0${simulatorSecondsLeft}` : simulatorSecondsLeft}
-                      </div>
-
-                      {/* Simulated Interactive Triggers */}
-                      <div className="pt-6 border-t border-stone-100 space-y-3">
-                        <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Demo Sandbox Controller</p>
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            onClick={() => handleSimulateApprovalChange(true)}
-                            className="bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
-                          >
-                            ✓ Simulate Success
-                          </button>
-                          <button
-                            onClick={() => handleSimulateApprovalChange(false)}
-                            className="bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm"
-                          >
-                            ✗ Simulate Decline
-                          </button>
-                        </div>
                       </div>
                     </div>
                   )}

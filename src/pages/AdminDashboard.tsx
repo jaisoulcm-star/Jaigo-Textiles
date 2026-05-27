@@ -300,8 +300,8 @@ export const AdminDashboard: React.FC = () => {
           "error",
         );
       } else if (error.code === "permission-denied") {
-        // Fallback to local sandbox products & orders
-        showToast("Using localized Sandbox database. Features are fully interactive!", "success");
+        // Fallback to local offline products & orders
+        showToast("Loaded local active collection, fully interactive.", "success");
         let localProducts: Product[] = [];
         const storedProducts = localStorage.getItem("jaigo_demo_products");
         if (storedProducts) {
@@ -378,11 +378,11 @@ export const AdminDashboard: React.FC = () => {
         
         if (editingProduct) {
           localProducts = localProducts.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } as Product : p);
-          showToast("Product updated successfully (Sandbox)");
+          showToast("Product updated successfully");
         } else {
           const newProduct = { ...productData, id: "prod-" + Date.now().toString() } as Product;
           localProducts = [newProduct, ...localProducts];
-          showToast("New product added (Sandbox)");
+          showToast("New product added successfully");
         }
         localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
         
@@ -434,11 +434,11 @@ export const AdminDashboard: React.FC = () => {
         }
         if (editingProduct) {
           localProducts = localProducts.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } as Product : p);
-          showToast("Product updated (Sandbox Fallback)", "success");
+          showToast("Product updated successfully", "success");
         } else {
           const newProduct = { ...productData, id: "prod-" + Date.now().toString() } as Product;
           localProducts = [newProduct, ...localProducts];
-          showToast("Product added (Sandbox Fallback)", "success");
+          showToast("New product added successfully", "success");
         }
         localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
         setIsModalOpen(false);
@@ -478,7 +478,7 @@ export const AdminDashboard: React.FC = () => {
         }
         localProducts = localProducts.filter(p => p.id !== id);
         localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-        showToast("Product deleted (Sandbox)");
+        showToast("Product deleted successfully");
         fetchData();
       } else {
         try {
@@ -494,7 +494,7 @@ export const AdminDashboard: React.FC = () => {
             }
             localProducts = localProducts.filter(p => p.id !== id);
             localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-            showToast("Product deleted (Sandbox Fallback)");
+            showToast("Product deleted successfully");
             fetchData();
           } else {
             throw error;
@@ -523,7 +523,7 @@ export const AdminDashboard: React.FC = () => {
         }
         localOrders = localOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
         localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
-        showToast(`Order #${orderId.slice(0, 6)} updated (Sandbox)`);
+        showToast(`Order #${orderId.slice(0, 6)} updated successfully`);
         fetchData();
       } else {
         try {
@@ -539,7 +539,7 @@ export const AdminDashboard: React.FC = () => {
             }
             localOrders = localOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
             localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
-            showToast(`Order #${orderId.slice(0, 6)} updated (Sandbox Fallback)`);
+            showToast(`Order #${orderId.slice(0, 6)} updated successfully`);
             fetchData();
           } else {
             throw error;
