@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export const Login: React.FC = () => {
-  const { user, login, loginAsDemoUser, loading } = useAuth();
+  const { user, isAdmin, login, loginAsDemoUser, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || "/";
@@ -14,9 +14,10 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     if (user && !loading) {
-      navigate(from, { replace: true });
+      const target = isAdmin && from === "/" ? "/admin" : from;
+      navigate(target, { replace: true });
     }
-  }, [user, loading, navigate, from]);
+  }, [user, loading, isAdmin, navigate, from]);
 
   if (loading) {
     return (

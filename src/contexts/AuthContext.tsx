@@ -28,12 +28,38 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = sessionStorage.getItem("jaigo_demo_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem("jaigo_demo_is_admin") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [loading, setLoading] = useState(true);
-  const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem("jaigo_demo_access_token") || null;
+    } catch {
+      return null;
+    }
+  });
 
   const setAccessToken = (token: string | null) => {
+    try {
+      if (token) {
+        sessionStorage.setItem("jaigo_demo_access_token", token);
+      } else {
+        sessionStorage.removeItem("jaigo_demo_access_token");
+      }
+    } catch {}
     setAccessTokenState(token);
   };
 
@@ -59,6 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         phoneNumber: null,
         isAnonymous: false,
       } as any;
+      try {
+        sessionStorage.setItem("jaigo_demo_user", JSON.stringify(mockUser));
+        sessionStorage.setItem("jaigo_demo_is_admin", "true");
+        sessionStorage.setItem("jaigo_demo_access_token", "demo-token-admin");
+      } catch {}
       setUser(mockUser);
       setIsAdmin(true);
       setAccessTokenState("demo-token-admin");
@@ -73,6 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         phoneNumber: null,
         isAnonymous: false,
       } as any;
+      try {
+        sessionStorage.setItem("jaigo_demo_user", JSON.stringify(mockUser));
+        sessionStorage.setItem("jaigo_demo_is_admin", "false");
+        sessionStorage.setItem("jaigo_demo_access_token", "demo-token-customer");
+      } catch {}
       setUser(mockUser);
       setIsAdmin(false);
       setAccessTokenState("demo-token-customer");
@@ -81,18 +117,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const handleLogout = async () => {
+    try {
+      sessionStorage.removeItem("jaigo_demo_user");
+      sessionStorage.removeItem("jaigo_demo_is_admin");
+      sessionStorage.removeItem("jaigo_demo_access_token");
+    } catch {}
     await logout();
+    setUser(null);
+    setIsAdmin(false);
     setAccessTokenState(null);
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (sessionStorage.getItem("jaigo_demo_user")) {
+          setLoading(false);
+          return;
+        }
+      } catch {}
+
+      setUser(firebaseUser);
+      if (firebaseUser) {
         // Restricted to specific admin emails
         setIsAdmin(
           ["jaigogroups@gmail.com", "venimurugesh@gmail.com"].includes(
-            user.email || "",
+            firebaseUser.email || "",
           ),
         );
       } else {

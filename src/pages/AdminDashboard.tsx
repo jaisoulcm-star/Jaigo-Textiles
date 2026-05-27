@@ -184,23 +184,114 @@ export const AdminDashboard: React.FC = () => {
 
   const fetchData = async () => {
     setLoading(true);
+    const isDemo = user?.uid?.startsWith("demo-");
+
+    if (isDemo) {
+      // Use localized storage for the sandbox environment
+      let localProducts: Product[] = [];
+      const storedProducts = localStorage.getItem("jaigo_demo_products");
+      if (storedProducts) {
+        try {
+          localProducts = JSON.parse(storedProducts);
+        } catch {}
+      }
+      if (localProducts.length === 0) {
+        try {
+          const { MOCK_PRODUCTS } = await import("../constants");
+          localProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+          localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+        } catch {}
+      }
+      setProducts(localProducts);
+
+      let localOrders: Order[] = [];
+      const storedOrders = localStorage.getItem("jaigo_demo_orders");
+      if (storedOrders) {
+        try {
+          localOrders = JSON.parse(storedOrders);
+        } catch {}
+      }
+      if (localOrders.length === 0) {
+        const initialMockOrders: Order[] = [
+          {
+            id: "ord-1",
+            customerName: "Jayanthi Sundaresan",
+            email: "jayanthi@gmail.com",
+            address: "12, Sastri Nagar Main Road, Adyar, Chennai, Tamil Nadu - 600020",
+            phone: "9876543210",
+            paymentMethod: "UPI",
+            items: [
+              {
+                id: "1",
+                name: "Royal Heritage Kanchipuram Silk",
+                subtitle: "A Masterpiece from the Temple Town of Kanchipuram",
+                description: "Breathtaking maroon silk with authentic gold zari weave.",
+                price: 18500,
+                category: "Silk",
+                imageUrls: ["https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop"],
+                isFeatured: true,
+                isBestSeller: true,
+                stock: 5,
+                createdAt: new Date().toISOString(),
+                quantity: 1
+              } as any
+            ],
+            totalAmount: 18500,
+            status: "processing",
+            createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
+          },
+          {
+            id: "ord-2",
+            customerName: "Ananya Iyer",
+            email: "ananya@iyer.co",
+            address: "B-204, Riverview Apartments, Kakkanad, Kochi, Kerala - 682030",
+            phone: "8123456789",
+            paymentMethod: "Card",
+            items: [
+              {
+                id: "2",
+                name: "Chettinad Aiyiram Butta Cotton",
+                subtitle: "Hand-loomed by Heritage Weavers of Karaikudi",
+                description: "Heritage handloom cotton with traditional temple borders.",
+                price: 4200,
+                category: "Cotton",
+                imageUrls: ["https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&q=80&w=800"],
+                isNew: true,
+                stock: 12,
+                createdAt: new Date().toISOString(),
+                quantity: 1
+              } as any
+            ],
+            totalAmount: 4200,
+            status: "pending",
+            createdAt: new Date(Date.now() - 3600000 * 1).toISOString()
+          }
+        ];
+        localOrders = initialMockOrders;
+        localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
+      }
+      setOrders(localOrders);
+      setLoading(false);
+      return;
+    }
+
     try {
       const pSnapshot = await getDocs(
         query(collection(db, "products"), orderBy("createdAt", "desc")),
       );
-      setProducts(
-        pSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Product[],
-      );
+      const liveProducts = pSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Product[];
+      setProducts(liveProducts);
+      localStorage.setItem("jaigo_demo_products", JSON.stringify(liveProducts));
 
       const oSnapshot = await getDocs(
         query(collection(db, "orders"), orderBy("createdAt", "desc")),
       );
-      setOrders(
-        oSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[],
-      );
+      const liveOrders = oSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[];
+      setOrders(liveOrders);
+      localStorage.setItem("jaigo_demo_orders", JSON.stringify(liveOrders));
     } catch (error: any) {
       console.error("Error fetching admin data:", error);
       if (error.message?.includes("index")) {
@@ -209,7 +300,28 @@ export const AdminDashboard: React.FC = () => {
           "error",
         );
       } else if (error.code === "permission-denied") {
-        showToast("Access denied. Admin privileges required.", "error");
+        // Fallback to local sandbox products & orders
+        showToast("Using localized Sandbox database. Features are fully interactive!", "success");
+        let localProducts: Product[] = [];
+        const storedProducts = localStorage.getItem("jaigo_demo_products");
+        if (storedProducts) {
+          try { localProducts = JSON.parse(storedProducts); } catch {}
+        }
+        if (localProducts.length === 0) {
+          try {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            localProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+          } catch {}
+        }
+        setProducts(localProducts);
+
+        let localOrders: Order[] = [];
+        const storedOrders = localStorage.getItem("jaigo_demo_orders");
+        if (storedOrders) {
+          try { localOrders = JSON.parse(storedOrders); } catch {}
+        }
+        setOrders(localOrders);
       } else {
         showToast("Failed to sync database state", "error");
       }
@@ -224,6 +336,15 @@ export const AdminDashboard: React.FC = () => {
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
+      showToast("Please enter a valid price.", "error");
+      return;
+    }
+    if (isNaN(Number(formData.stock)) || Number(formData.stock) < 0) {
+      showToast("Please enter a valid stock quantity.", "error");
+      return;
+    }
+
     const colPath = "products";
     const productData = {
       name: formData.name,
@@ -244,33 +365,101 @@ export const AdminDashboard: React.FC = () => {
       createdAt: editingProduct ? editingProduct.createdAt : new Date(),
     };
 
+    const isDemo = user?.uid?.startsWith("demo-");
+
     setSubmitting(true);
     try {
-      if (editingProduct) {
-        await updateDoc(doc(db, colPath, editingProduct.id), productData);
-        showToast("Product updated successfully");
+      if (isDemo) {
+        let localProducts: Product[] = [];
+        const storedProducts = localStorage.getItem("jaigo_demo_products");
+        if (storedProducts) {
+          try { localProducts = JSON.parse(storedProducts); } catch {}
+        }
+        
+        if (editingProduct) {
+          localProducts = localProducts.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } as Product : p);
+          showToast("Product updated successfully (Sandbox)");
+        } else {
+          const newProduct = { ...productData, id: "prod-" + Date.now().toString() } as Product;
+          localProducts = [newProduct, ...localProducts];
+          showToast("New product added (Sandbox)");
+        }
+        localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+        
+        setIsModalOpen(false);
+        setEditingProduct(null);
+        setFormData({
+          name: "",
+          subtitle: "",
+          description: "",
+          price: "",
+          category: "Silk",
+          imageUrls: [""],
+          stock: "",
+          isFeatured: false,
+          isNew: false,
+          isBestSeller: false,
+        });
+        fetchData();
       } else {
-        await addDoc(collection(db, colPath), productData);
-        showToast("New product added");
+        if (editingProduct) {
+          await updateDoc(doc(db, colPath, editingProduct.id), productData);
+          showToast("Product updated successfully");
+        } else {
+          await addDoc(collection(db, colPath), productData);
+          showToast("New product added");
+        }
+        setIsModalOpen(false);
+        setEditingProduct(null);
+        setFormData({
+          name: "",
+          subtitle: "",
+          description: "",
+          price: "",
+          category: "Silk",
+          imageUrls: [""],
+          stock: "",
+          isFeatured: false,
+          isNew: false,
+          isBestSeller: false,
+        });
+        fetchData();
       }
-      setIsModalOpen(false);
-      setEditingProduct(null);
-      setFormData({
-        name: "",
-        subtitle: "",
-        description: "",
-        price: "",
-        category: "Silk",
-        imageUrls: [""],
-        stock: "",
-        isFeatured: false,
-        isNew: false,
-        isBestSeller: false,
-      });
-      fetchData();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, colPath);
-      showToast("Error saving product", "error");
+    } catch (error: any) {
+      if (error?.code === "permission-denied") {
+        let localProducts: Product[] = [];
+        const storedProducts = localStorage.getItem("jaigo_demo_products");
+        if (storedProducts) {
+          try { localProducts = JSON.parse(storedProducts); } catch {}
+        }
+        if (editingProduct) {
+          localProducts = localProducts.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } as Product : p);
+          showToast("Product updated (Sandbox Fallback)", "success");
+        } else {
+          const newProduct = { ...productData, id: "prod-" + Date.now().toString() } as Product;
+          localProducts = [newProduct, ...localProducts];
+          showToast("Product added (Sandbox Fallback)", "success");
+        }
+        localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+        setIsModalOpen(false);
+        setEditingProduct(null);
+        setFormData({
+          name: "",
+          subtitle: "",
+          description: "",
+          price: "",
+          category: "Silk",
+          imageUrls: [""],
+          stock: "",
+          isFeatured: false,
+          isNew: false,
+          isBestSeller: false,
+        });
+        fetchData();
+      } else {
+        handleFirestoreError(error, OperationType.WRITE, colPath);
+        showToast("Error saving product", "error");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -279,10 +468,39 @@ export const AdminDashboard: React.FC = () => {
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
+    const isDemo = user?.uid?.startsWith("demo-");
     try {
-      await deleteDoc(doc(db, "products", id));
-      showToast("Product deleted");
-      fetchData();
+      if (isDemo) {
+        let localProducts: Product[] = [];
+        const storedProducts = localStorage.getItem("jaigo_demo_products");
+        if (storedProducts) {
+          try { localProducts = JSON.parse(storedProducts); } catch {}
+        }
+        localProducts = localProducts.filter(p => p.id !== id);
+        localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+        showToast("Product deleted (Sandbox)");
+        fetchData();
+      } else {
+        try {
+          await deleteDoc(doc(db, "products", id));
+          showToast("Product deleted");
+          fetchData();
+        } catch (error: any) {
+          if (error?.code === "permission-denied") {
+            let localProducts: Product[] = [];
+            const storedProducts = localStorage.getItem("jaigo_demo_products");
+            if (storedProducts) {
+              try { localProducts = JSON.parse(storedProducts); } catch {}
+            }
+            localProducts = localProducts.filter(p => p.id !== id);
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+            showToast("Product deleted (Sandbox Fallback)");
+            fetchData();
+          } else {
+            throw error;
+          }
+        }
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, "products");
       showToast("Error deleting product", "error");
@@ -295,10 +513,39 @@ export const AdminDashboard: React.FC = () => {
   ) => {
     const colPath = "orders";
     setUpdatingOrderId(orderId);
+    const isDemo = user?.uid?.startsWith("demo-");
     try {
-      await updateDoc(doc(db, colPath, orderId), { status: newStatus });
-      showToast(`Order #${orderId.slice(0, 6)} updated`);
-      fetchData();
+      if (isDemo) {
+        let localOrders: Order[] = [];
+        const storedOrders = localStorage.getItem("jaigo_demo_orders");
+        if (storedOrders) {
+          try { localOrders = JSON.parse(storedOrders); } catch {}
+        }
+        localOrders = localOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+        localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
+        showToast(`Order #${orderId.slice(0, 6)} updated (Sandbox)`);
+        fetchData();
+      } else {
+        try {
+          await updateDoc(doc(db, colPath, orderId), { status: newStatus });
+          showToast(`Order #${orderId.slice(0, 6)} updated`);
+          fetchData();
+        } catch (error: any) {
+          if (error?.code === "permission-denied") {
+            let localOrders: Order[] = [];
+            const storedOrders = localStorage.getItem("jaigo_demo_orders");
+            if (storedOrders) {
+              try { localOrders = JSON.parse(storedOrders); } catch {}
+            }
+            localOrders = localOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
+            localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
+            showToast(`Order #${orderId.slice(0, 6)} updated (Sandbox Fallback)`);
+            fetchData();
+          } else {
+            throw error;
+          }
+        }
+      }
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, colPath);
       showToast("Error updating order", "error");

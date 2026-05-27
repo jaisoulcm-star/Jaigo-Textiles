@@ -52,25 +52,39 @@ export const Home: React.FC = () => {
     const fetchHomeData = async () => {
       setLoading(true);
       try {
-        const q = query(
-          collection(db, "products"),
-          orderBy("createdAt", "desc"),
-        );
-        const snapshot = await getDocs(q);
+        const isDemo = sessionStorage.getItem("jaigo_demo_user")
+          ? JSON.parse(sessionStorage.getItem("jaigo_demo_user") || "{}")?.uid?.startsWith("demo-")
+          : false;
 
         let allProducts: Product[] = [];
-        if (!snapshot.empty) {
-          allProducts = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })) as Product[];
-        } else {
-          // Fallback to mock data if Firestore is empty so the site isn't blank
-          const { MOCK_PRODUCTS } = await import("../constants");
-          allProducts = MOCK_PRODUCTS as Product[];
+        if (isDemo) {
+          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          if (storedProducts) {
+            try { allProducts = JSON.parse(storedProducts); } catch {}
+          }
         }
 
-        setFeaturedProducts([]);
+        if (allProducts.length === 0) {
+          const q = query(
+            collection(db, "products"),
+            orderBy("createdAt", "desc"),
+          );
+          const snapshot = await getDocs(q);
+          if (!snapshot.empty) {
+            allProducts = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as Product[];
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+          } else {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+          }
+        }
+
+        const featured = allProducts.filter((p) => p.isFeatured).slice(0, 4);
+        setFeaturedProducts(featured.length > 0 ? featured : allProducts.slice(0, 4));
         setAccessoryProducts(
           allProducts.filter((p) => p.category === "Accessories").slice(0, 3),
         );
@@ -88,9 +102,19 @@ export const Home: React.FC = () => {
         console.error("Error fetching home data:", error);
         // Fallback on error too
         try {
-          const { MOCK_PRODUCTS } = await import("../constants");
-          const allProducts = MOCK_PRODUCTS as Product[];
-          setFeaturedProducts([]);
+          let allProducts: Product[] = [];
+          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          if (storedProducts) {
+            try { allProducts = JSON.parse(storedProducts); } catch {}
+          }
+          if (allProducts.length === 0) {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+          }
+          
+          const featured = allProducts.filter((p) => p.isFeatured).slice(0, 4);
+          setFeaturedProducts(featured.length > 0 ? featured : allProducts.slice(0, 4));
           setAccessoryProducts(
             allProducts.filter((p) => p.category === "Accessories").slice(0, 3),
           );

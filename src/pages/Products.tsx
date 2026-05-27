@@ -31,28 +31,71 @@ export const Products: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       const colPath = "products";
+      const cat = searchParams.get("cat");
+      if (cat && cat !== "All") {
+        setSelectedCategory(cat);
+      } else {
+        setSelectedCategory("All");
+      }
+
       try {
-        let q = query(collection(db, colPath));
-        const cat = searchParams.get("cat");
-        if (cat && cat !== "All") {
-          q = query(collection(db, colPath), where("category", "==", cat));
-          setSelectedCategory(cat);
-        } else {
-          setSelectedCategory("All");
+        const isDemo = sessionStorage.getItem("jaigo_demo_user")
+          ? JSON.parse(sessionStorage.getItem("jaigo_demo_user") || "{}")?.uid?.startsWith("demo-")
+          : false;
+
+        let allProducts: Product[] = [];
+        if (isDemo) {
+          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          if (storedProducts) {
+            try {
+              allProducts = JSON.parse(storedProducts);
+            } catch {}
+          }
         }
 
-        const snapshot = await getDocs(q);
-        let data: Product[] = [];
-        if (!snapshot.empty) {
-          data = []; // Products cleared per user request
-        } else {
-          // Fallback to mock data (cleared per user request)
-          data = [];
+        if (allProducts.length === 0) {
+          const q = query(collection(db, colPath));
+          const snapshot = await getDocs(q);
+          if (!snapshot.empty) {
+            allProducts = snapshot.docs.map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })) as Product[];
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+          } else {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+          }
         }
-        setProducts(data);
+
+        // Apply category filter
+        let displayProducts = allProducts;
+        if (cat && cat !== "All") {
+          displayProducts = allProducts.filter((p) => p.category === cat);
+        }
+        setProducts(displayProducts);
       } catch (error) {
-        console.warn("DB Fetch failed, attempting mock data");
-        setProducts([]);
+        console.warn("DB Fetch failed, attempting local products list", error);
+        let allProducts: Product[] = [];
+        try {
+          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          if (storedProducts) {
+            allProducts = JSON.parse(storedProducts);
+          }
+          if (allProducts.length === 0) {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+          }
+          let displayProducts = allProducts;
+          if (cat && cat !== "All") {
+            displayProducts = allProducts.filter((p) => p.category === cat);
+          }
+          setProducts(displayProducts);
+        } catch {
+          setProducts([]);
+        }
       } finally {
         setLoading(false);
       }

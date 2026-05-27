@@ -171,31 +171,46 @@ export const ProductDetail: React.FC = () => {
       if (!id) return;
       setLoading(true);
       try {
-        const docRef = doc(db, "products", id);
-        const snapshot = await getDoc(docRef);
-        if (snapshot.exists()) {
-          const data = snapshot.id ? { id: snapshot.id, ...snapshot.data() } : snapshot.data();
-          setProduct(data as Product);
-          const { addRecentlyViewed } = await import("../utils/recentViews");
-          addRecentlyViewed(snapshot.id);
-        } else {
-          // Fallback to mock data
-          const { MOCK_PRODUCTS } = await import("../constants");
-          const mockProduct = MOCK_PRODUCTS.find((p) => p.id === id);
-          if (mockProduct) {
-            setProduct(mockProduct as Product);
-            const { addRecentlyViewed } = await import("../utils/recentViews");
-            addRecentlyViewed(mockProduct.id);
+        let foundProduct: Product | undefined;
+
+        // Try to fetch from live Firestore database first
+        try {
+          const docRef = doc(db, "products", id);
+          const snapshot = await getDoc(docRef);
+          if (snapshot.exists()) {
+            foundProduct = { id: snapshot.id, ...snapshot.data() } as Product;
           }
+        } catch (dbError) {
+          console.warn("Firestore product details retrieval error, trying local caches:", dbError);
+        }
+
+        // If not found in live database (or blocked), check localized sandbox cache
+        if (!foundProduct) {
+          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          if (storedProducts) {
+            try {
+              const allProducts: Product[] = JSON.parse(storedProducts);
+              foundProduct = allProducts.find((p) => p.id === id);
+            } catch {}
+          }
+        }
+
+        // If not found in localized sandbox cache, check static presets
+        if (!foundProduct) {
+          const { MOCK_PRODUCTS } = await import("../constants");
+          foundProduct = MOCK_PRODUCTS.find((p) => p.id === id) as Product;
+        }
+
+        if (foundProduct) {
+          setProduct(foundProduct);
+          const { addRecentlyViewed } = await import("../utils/recentViews");
+          addRecentlyViewed(foundProduct.id);
+        } else {
+          setProduct(null);
         }
       } catch (error) {
         console.error("Error fetching product:", error);
-        // Secondary fallback
-        try {
-          const { MOCK_PRODUCTS } = await import("../constants");
-          const mockProduct = MOCK_PRODUCTS.find((p) => p.id === id);
-          if (mockProduct) setProduct(mockProduct as Product);
-        } catch (e) {}
+        setProduct(null);
       } finally {
         setLoading(false);
       }

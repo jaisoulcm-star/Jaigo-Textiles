@@ -19,6 +19,12 @@ export default defineConfig(({mode}) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    build: {
+      outDir: 'dist',
+      assetsDir: 'assets',
+      emptyOutDir: true,
+      chunkSizeWarningLimit: 1000,
+    },
     server: {
       port: 3000,
       host: '0.0.0.0',
