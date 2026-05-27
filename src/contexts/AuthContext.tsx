@@ -10,6 +10,7 @@ interface AuthContextType {
   accessToken: string | null;
   setAccessToken: (token: string | null) => void;
   login: () => Promise<string | null>;
+  loginAsDemoUser: (role: "customer" | "admin") => Promise<string | null>;
   logout: () => Promise<void>;
 }
 
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType>({
   accessToken: null,
   setAccessToken: () => {},
   login: async () => null,
+  loginAsDemoUser: async () => null,
   logout: async () => {},
 });
 
@@ -44,6 +46,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return token;
     }
     return null;
+  };
+
+  const loginAsDemoUser = async (role: "customer" | "admin") => {
+    if (role === "admin") {
+      const mockUser = {
+        uid: "demo-admin-456",
+        displayName: "Veni Murugesh (Staff)",
+        email: "venimurugesh@gmail.com",
+        photoURL: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150",
+        emailVerified: true,
+        phoneNumber: null,
+        isAnonymous: false,
+      } as any;
+      setUser(mockUser);
+      setIsAdmin(true);
+      setAccessTokenState("demo-token-admin");
+      return "demo-token-admin";
+    } else {
+      const mockUser = {
+        uid: "demo-customer-123",
+        displayName: "Demo Customer",
+        email: "customer@jaigotextiles.in",
+        photoURL: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150",
+        emailVerified: true,
+        phoneNumber: null,
+        isAnonymous: false,
+      } as any;
+      setUser(mockUser);
+      setIsAdmin(false);
+      setAccessTokenState("demo-token-customer");
+      return "demo-token-customer";
+    }
   };
 
   const handleLogout = async () => {
@@ -79,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         accessToken,
         setAccessToken,
         login,
+        loginAsDemoUser,
         logout: handleLogout,
       }}
     >
