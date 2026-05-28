@@ -10,7 +10,7 @@ interface AuthContextType {
   accessToken: string | null;
   setAccessToken: (token: string | null) => void;
   login: () => Promise<string | null>;
-  loginAsDemoUser: (role: "customer" | "admin") => Promise<string | null>;
+  loginAsDemoUser: (role: "customer" | "admin", email?: string) => Promise<string | null>;
   logout: () => Promise<void>;
 }
 
@@ -74,12 +74,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return null;
   };
 
-  const loginAsDemoUser = async (role: "customer" | "admin") => {
+  const loginAsDemoUser = async (role: "customer" | "admin", email?: string) => {
     if (role === "admin") {
+      const selectedEmail = (email || "venimurugesh@gmail.com").trim().toLowerCase();
+      let displayName = "Veni Murugesh (Staff)";
+      if (selectedEmail === "jaisoulcm@gmail.com") {
+        displayName = "Jai Soul (Staff)";
+      }
       const mockUser = {
         uid: "demo-admin-456",
-        displayName: "Veni Murugesh (Staff)",
-        email: "venimurugesh@gmail.com",
+        displayName,
+        email: selectedEmail,
         photoURL: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150",
         emailVerified: true,
         phoneNumber: null,
@@ -139,8 +144,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setUser(firebaseUser);
       if (firebaseUser) {
-        // Restricted to specific admin email
-        setIsAdmin(firebaseUser.email === "venimurugesh@gmail.com");
+        // Restricted to specific admin emails
+        setIsAdmin(
+          firebaseUser.email === "venimurugesh@gmail.com" ||
+          firebaseUser.email === "jaisoulcm@gmail.com"
+        );
       } else {
         setIsAdmin(false);
         setAccessTokenState(null);

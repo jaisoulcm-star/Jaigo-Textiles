@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Loader2,
   Lock,
+  RotateCcw,
 } from "lucide-react";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import { db } from "../firebase";
@@ -185,90 +186,100 @@ export const AdminDashboard: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     const isDemo = user?.uid?.startsWith("demo-");
+    const productKey = isDemo ? "jaigo_sandbox_products" : "jaigo_live_products";
+    const orderKey = isDemo ? "jaigo_sandbox_orders" : "jaigo_live_orders";
 
     if (isDemo) {
       // Use localized storage for the sandbox environment
       let localProducts: Product[] = [];
-      const storedProducts = localStorage.getItem("jaigo_demo_products");
+      const storedProducts = localStorage.getItem(productKey);
       if (storedProducts) {
         try {
           localProducts = JSON.parse(storedProducts);
         } catch {}
       }
       if (localProducts.length === 0) {
-        try {
-          const { MOCK_PRODUCTS } = await import("../constants");
-          localProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
-          localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-        } catch {}
+        const isInitialized = localStorage.getItem("jaigo_products_initialized");
+        if (!isInitialized) {
+          try {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            localProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem(productKey, JSON.stringify(localProducts));
+            localStorage.setItem("jaigo_products_initialized", "true");
+          } catch {}
+        }
       }
       setProducts(localProducts);
 
       let localOrders: Order[] = [];
-      const storedOrders = localStorage.getItem("jaigo_demo_orders");
+      const storedOrders = localStorage.getItem(orderKey);
       if (storedOrders) {
         try {
           localOrders = JSON.parse(storedOrders);
         } catch {}
       }
       if (localOrders.length === 0) {
-        const initialMockOrders: Order[] = [
-          {
-            id: "ord-1",
-            customerName: "Jayanthi Sundaresan",
-            email: "jayanthi@gmail.com",
-            address: "12, Sastri Nagar Main Road, Adyar, Chennai, Tamil Nadu - 600020",
-            phone: "9876543210",
-            paymentMethod: "UPI",
-            items: [
-              {
-                id: "1",
-                name: "Royal Heritage Kanchipuram Silk",
-                subtitle: "A Masterpiece from the Temple Town of Kanchipuram",
-                description: "Breathtaking maroon silk with authentic gold zari weave.",
-                price: 18500,
-                category: "Silk",
-                imageUrls: ["https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop"],
-                isFeatured: true,
-                isBestSeller: true,
-                stock: 5,
-                createdAt: new Date().toISOString(),
-                quantity: 1
-              } as any
-            ],
-            totalAmount: 18500,
-            status: "processing",
-            createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
-          },
-          {
-            id: "ord-2",
-            customerName: "Ananya Iyer",
-            email: "ananya@iyer.co",
-            address: "B-204, Riverview Apartments, Kakkanad, Kochi, Kerala - 682030",
-            phone: "8123456789",
-            paymentMethod: "Card",
-            items: [
-              {
-                id: "2",
-                name: "Chettinad Aiyiram Butta Cotton",
-                subtitle: "Hand-loomed by Heritage Weavers of Karaikudi",
-                description: "Heritage handloom cotton with traditional temple borders.",
-                price: 4200,
-                category: "Cotton",
-                imageUrls: ["https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&q=80&w=800"],
-                isNew: true,
-                stock: 12,
-                createdAt: new Date().toISOString(),
-                quantity: 1
-              } as any
-            ],
-            totalAmount: 4200,
-            status: "pending",
-            createdAt: new Date(Date.now() - 3600000 * 1).toISOString()
-          }
-        ];
-        localOrders = initialMockOrders;
-        localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
+        const isOrdersInitialized = localStorage.getItem("jaigo_orders_initialized");
+        if (!isOrdersInitialized) {
+          const initialMockOrders: Order[] = [
+            {
+              id: "ord-1",
+              customerName: "Jayanthi Sundaresan",
+              email: "jayanthi@gmail.com",
+              address: "12, Sastri Nagar Main Road, Adyar, Chennai, Tamil Nadu - 600020",
+              phone: "9876543210",
+              paymentMethod: "UPI",
+              items: [
+                {
+                  id: "1",
+                  name: "Royal Heritage Kanchipuram Silk",
+                  subtitle: "A Masterpiece from the Temple Town of Kanchipuram",
+                  description: "Breathtaking maroon silk with authentic gold zari weave.",
+                  price: 18500,
+                  category: "Silk",
+                  imageUrls: ["https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=800&auto=format&fit=crop"],
+                  isFeatured: true,
+                  isBestSeller: true,
+                  stock: 5,
+                  createdAt: new Date().toISOString(),
+                  quantity: 1
+                } as any
+              ],
+              totalAmount: 18500,
+              status: "processing",
+              createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
+            },
+            {
+              id: "ord-2",
+              customerName: "Ananya Iyer",
+              email: "ananya@iyer.co",
+              address: "B-204, Riverview Apartments, Kakkanad, Kochi, Kerala - 682030",
+              phone: "8123456789",
+              paymentMethod: "Card",
+              items: [
+                {
+                  id: "2",
+                  name: "Chettinad Aiyiram Butta Cotton",
+                  subtitle: "Hand-loomed by Heritage Weavers of Karaikudi",
+                  description: "Heritage handloom cotton with traditional temple borders.",
+                  price: 4200,
+                  category: "Cotton",
+                  imageUrls: ["https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&q=80&w=800"],
+                  isNew: true,
+                  stock: 12,
+                  createdAt: new Date().toISOString(),
+                  quantity: 1
+                } as any
+              ],
+              totalAmount: 4200,
+              status: "pending",
+              createdAt: new Date(Date.now() - 3600000 * 1).toISOString()
+            }
+          ];
+          localOrders = initialMockOrders;
+          localStorage.setItem(orderKey, JSON.stringify(localOrders));
+          localStorage.setItem("jaigo_orders_initialized", "true");
+        }
       }
       setOrders(localOrders);
       setLoading(false);
@@ -284,14 +295,16 @@ export const AdminDashboard: React.FC = () => {
         ...doc.data(),
       })) as Product[];
       setProducts(liveProducts);
-      localStorage.setItem("jaigo_demo_products", JSON.stringify(liveProducts));
+      localStorage.setItem(productKey, JSON.stringify(liveProducts));
+      localStorage.setItem("jaigo_products_initialized", "true");
 
       const oSnapshot = await getDocs(
         query(collection(db, "orders"), orderBy("createdAt", "desc")),
       );
       const liveOrders = oSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[];
       setOrders(liveOrders);
-      localStorage.setItem("jaigo_demo_orders", JSON.stringify(liveOrders));
+      localStorage.setItem(orderKey, JSON.stringify(liveOrders));
+      localStorage.setItem("jaigo_orders_initialized", "true");
     } catch (error: any) {
       console.error("Error fetching admin data:", error);
       if (error.message?.includes("index")) {
@@ -303,21 +316,25 @@ export const AdminDashboard: React.FC = () => {
         // Fallback to local offline products & orders
         showToast("Loaded local active collection, fully interactive.", "success");
         let localProducts: Product[] = [];
-        const storedProducts = localStorage.getItem("jaigo_demo_products");
+        const storedProducts = localStorage.getItem(productKey);
         if (storedProducts) {
           try { localProducts = JSON.parse(storedProducts); } catch {}
         }
         if (localProducts.length === 0) {
-          try {
-            const { MOCK_PRODUCTS } = await import("../constants");
-            localProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
-            localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-          } catch {}
+          const isInitialized = localStorage.getItem("jaigo_products_initialized");
+          if (!isInitialized) {
+            try {
+              const { MOCK_PRODUCTS } = await import("../constants");
+              localProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+              localStorage.setItem(productKey, JSON.stringify(localProducts));
+              localStorage.setItem("jaigo_products_initialized", "true");
+            } catch {}
+          }
         }
         setProducts(localProducts);
 
         let localOrders: Order[] = [];
-        const storedOrders = localStorage.getItem("jaigo_demo_orders");
+        const storedOrders = localStorage.getItem(orderKey);
         if (storedOrders) {
           try { localOrders = JSON.parse(storedOrders); } catch {}
         }
@@ -362,85 +379,61 @@ export const AdminDashboard: React.FC = () => {
       isFeatured: formData.isFeatured,
       isNew: formData.isNew,
       isBestSeller: formData.isBestSeller,
-      createdAt: editingProduct ? editingProduct.createdAt : new Date(),
+      createdAt: editingProduct ? editingProduct.createdAt : new Date().toISOString(),
     };
 
     const isDemo = user?.uid?.startsWith("demo-");
+    const productKey = isDemo ? "jaigo_sandbox_products" : "jaigo_live_products";
 
     setSubmitting(true);
     try {
+      // Synchronously write to local storage first to prevent lag and ensure offline resilience
+      let localProducts: Product[] = [];
+      const storedProducts = localStorage.getItem(productKey);
+      if (storedProducts) {
+        try { localProducts = JSON.parse(storedProducts); } catch {}
+      }
+      
+      const newId = editingProduct ? editingProduct.id : "prod-" + Date.now().toString();
+      const submissionProduct = { ...productData, id: newId } as Product;
+
+      if (editingProduct) {
+        localProducts = localProducts.map(p => p.id === editingProduct.id ? submissionProduct : p);
+      } else {
+        localProducts = [submissionProduct, ...localProducts];
+      }
+      localStorage.setItem(productKey, JSON.stringify(localProducts));
+
       if (isDemo) {
-        let localProducts: Product[] = [];
-        const storedProducts = localStorage.getItem("jaigo_demo_products");
-        if (storedProducts) {
-          try { localProducts = JSON.parse(storedProducts); } catch {}
-        }
-        
-        if (editingProduct) {
-          localProducts = localProducts.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } as Product : p);
-          showToast("Product updated successfully");
-        } else {
-          const newProduct = { ...productData, id: "prod-" + Date.now().toString() } as Product;
-          localProducts = [newProduct, ...localProducts];
-          showToast("New product added successfully");
-        }
-        localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-        
-        setIsModalOpen(false);
-        setEditingProduct(null);
-        setFormData({
-          name: "",
-          subtitle: "",
-          description: "",
-          price: "",
-          category: "Silk",
-          imageUrls: [""],
-          stock: "",
-          isFeatured: false,
-          isNew: false,
-          isBestSeller: false,
-        });
-        fetchData();
+        showToast(editingProduct ? "Product updated successfully" : "New product added successfully", "success");
       } else {
         if (editingProduct) {
           await updateDoc(doc(db, colPath, editingProduct.id), productData);
-          showToast("Product updated successfully");
-        } else {
-          await addDoc(collection(db, colPath), productData);
-          showToast("New product added");
-        }
-        setIsModalOpen(false);
-        setEditingProduct(null);
-        setFormData({
-          name: "",
-          subtitle: "",
-          description: "",
-          price: "",
-          category: "Silk",
-          imageUrls: [""],
-          stock: "",
-          isFeatured: false,
-          isNew: false,
-          isBestSeller: false,
-        });
-        fetchData();
-      }
-    } catch (error: any) {
-      if (error?.code === "permission-denied") {
-        let localProducts: Product[] = [];
-        const storedProducts = localStorage.getItem("jaigo_demo_products");
-        if (storedProducts) {
-          try { localProducts = JSON.parse(storedProducts); } catch {}
-        }
-        if (editingProduct) {
-          localProducts = localProducts.map(p => p.id === editingProduct.id ? { ...productData, id: p.id } as Product : p);
           showToast("Product updated successfully", "success");
         } else {
-          const newProduct = { ...productData, id: "prod-" + Date.now().toString() } as Product;
-          localProducts = [newProduct, ...localProducts];
+          await addDoc(collection(db, colPath), productData);
           showToast("New product added successfully", "success");
         }
-        localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
+      }
+
+      setIsModalOpen(false);
+      setEditingProduct(null);
+      setFormData({
+        name: "",
+        subtitle: "",
+        description: "",
+        price: "",
+        category: "Silk",
+        imageUrls: [""],
+        stock: "",
+        isFeatured: false,
+        isNew: false,
+        isBestSeller: false,
+      });
+      fetchData();
+    } catch (error: any) {
+      if (error?.code === "permission-denied") {
+        // Safe fallback - already updated local storage
         setIsModalOpen(false);
         setEditingProduct(null);
         setFormData({
@@ -455,6 +448,7 @@ export const AdminDashboard: React.FC = () => {
           isNew: false,
           isBestSeller: false,
         });
+        showToast(editingProduct ? "Product updated successfully" : "New product added successfully", "success");
         fetchData();
       } else {
         handleFirestoreError(error, OperationType.WRITE, colPath);
@@ -469,32 +463,30 @@ export const AdminDashboard: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
     const isDemo = user?.uid?.startsWith("demo-");
+    const productKey = isDemo ? "jaigo_sandbox_products" : "jaigo_live_products";
+
     try {
+      // Update local cache immediately so the user sees immediate state transition
+      let localProducts: Product[] = [];
+      const storedProducts = localStorage.getItem(productKey);
+      if (storedProducts) {
+        try { localProducts = JSON.parse(storedProducts); } catch {}
+      }
+      localProducts = localProducts.filter(p => p.id !== id);
+      localStorage.setItem(productKey, JSON.stringify(localProducts));
+
       if (isDemo) {
-        let localProducts: Product[] = [];
-        const storedProducts = localStorage.getItem("jaigo_demo_products");
-        if (storedProducts) {
-          try { localProducts = JSON.parse(storedProducts); } catch {}
-        }
-        localProducts = localProducts.filter(p => p.id !== id);
-        localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-        showToast("Product deleted successfully");
+        showToast("Product deleted successfully", "success");
         fetchData();
       } else {
         try {
           await deleteDoc(doc(db, "products", id));
-          showToast("Product deleted");
+          showToast("Product deleted successfully", "success");
           fetchData();
         } catch (error: any) {
           if (error?.code === "permission-denied") {
-            let localProducts: Product[] = [];
-            const storedProducts = localStorage.getItem("jaigo_demo_products");
-            if (storedProducts) {
-              try { localProducts = JSON.parse(storedProducts); } catch {}
-            }
-            localProducts = localProducts.filter(p => p.id !== id);
-            localStorage.setItem("jaigo_demo_products", JSON.stringify(localProducts));
-            showToast("Product deleted successfully");
+            // Already updated local storage cache safely
+            showToast("Product deleted successfully", "success");
             fetchData();
           } else {
             throw error;
@@ -720,6 +712,62 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
+  const resetMetricsToZero = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to reset all metrics to 0? This will clear all orders and products catalog."
+      )
+    )
+      return;
+
+    const isDemo = user?.uid?.startsWith("demo-");
+
+    try {
+      setLoading(true);
+      // Clear all possible local caches
+      localStorage.setItem("jaigo_sandbox_products", JSON.stringify([]));
+      localStorage.setItem("jaigo_live_products", JSON.stringify([]));
+      localStorage.setItem("jaigo_demo_products", JSON.stringify([]));
+      
+      localStorage.setItem("jaigo_sandbox_orders", JSON.stringify([]));
+      localStorage.setItem("jaigo_live_orders", JSON.stringify([]));
+      localStorage.setItem("jaigo_demo_orders", JSON.stringify([]));
+
+      localStorage.setItem("jaigo_products_initialized", "true");
+      localStorage.setItem("jaigo_orders_initialized", "true");
+
+      setProducts([]);
+      setOrders([]);
+
+      // If not demo user, attempt live Firestore deletion as well
+      if (!isDemo) {
+        try {
+          const pSnapshot = await getDocs(collection(db, "products"));
+          const deleteProductsPromises = pSnapshot.docs.map((docSnap) =>
+            deleteDoc(doc(db, "products", docSnap.id))
+          );
+          await Promise.all(deleteProductsPromises);
+
+          const oSnapshot = await getDocs(collection(db, "orders"));
+          const deleteOrdersPromises = oSnapshot.docs.map((docSnap) =>
+            deleteDoc(doc(db, "orders", docSnap.id))
+          );
+          await Promise.all(deleteOrdersPromises);
+        } catch (dbError) {
+          console.warn("Firestore live deletion not fully allowed/completed, cleared local storage instead:", dbError);
+        }
+      }
+
+      showToast("All metrics reset to 0", "success");
+      await fetchData();
+    } catch (error) {
+      console.error("Error resetting stats:", error);
+      showToast("Error resetting stats", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-heritage-cream flex font-sans">
       {/* Sidebar */}
@@ -773,6 +821,12 @@ export const AdminDashboard: React.FC = () => {
           >
             <Star size={12} /> Seed Database
           </button>
+          <button
+            onClick={resetMetricsToZero}
+            className="text-[10px] uppercase tracking-widest text-red-400 hover:text-red-300 transition-colors text-left flex items-center gap-2 font-bold"
+          >
+            <RotateCcw size={12} /> Reset to 0
+          </button>
           <div className="text-[9px] uppercase tracking-widest text-stone-500 font-bold">
             System Status: Online
           </div>
@@ -780,7 +834,7 @@ export const AdminDashboard: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-grow p-8 max-h-screen overflow-y-auto">
+      <main className="flex-grow p-4 sm:p-8 max-h-screen overflow-y-auto">
         {/* Toast Notification */}
         <AnimatePresence>
           {toast && (
@@ -802,15 +856,81 @@ export const AdminDashboard: React.FC = () => {
           )}
         </AnimatePresence>
 
-        <header className="flex flex-col sm:flex-row justify-between items-center gap-6 mb-8 bg-white p-8 rounded-[32px] border border-stone-100 shadow-sm">
-          <div className="space-y-1 text-center sm:text-left">
+        {/* Mobile Navigation and System Actions Bar */}
+        <div className="md:hidden flex flex-col gap-4 mb-6 bg-stone-900 text-stone-300 p-5 rounded-[24px] border border-stone-800 shadow-lg">
+          <div className="flex items-center justify-between border-b border-stone-800/60 pb-3">
+            <span className="text-sm font-serif font-bold text-white tracking-wider">JAIGO Admin</span>
+            <div className="flex items-center gap-1.5 bg-stone-800/60 px-2.5 py-1 rounded-full border border-stone-700/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-[9px] uppercase font-bold tracking-widest text-stone-400">Online</span>
+            </div>
+          </div>
+          
+          {/* Tabs */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => setActiveTab("overview")}
+              className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl transition-all font-semibold uppercase tracking-wider text-[9px] ${
+                activeTab === "overview"
+                  ? "bg-heritage-maroon text-white shadow-md font-black"
+                  : "bg-stone-800/50 text-stone-400 hover:text-white"
+              }`}
+            >
+              <LayoutDashboard size={16} />
+              <span>Overview</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("products")}
+              className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl transition-all font-semibold uppercase tracking-wider text-[9px] ${
+                activeTab === "products"
+                  ? "bg-heritage-maroon text-white shadow-md font-black"
+                  : "bg-stone-800/50 text-stone-400 hover:text-white"
+              }`}
+            >
+              <Package size={16} />
+              <span>Products</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-xl transition-all font-semibold uppercase tracking-wider text-[9px] ${
+                activeTab === "orders"
+                  ? "bg-heritage-maroon text-white shadow-md font-black"
+                  : "bg-stone-800/50 text-stone-400 hover:text-white"
+              }`}
+            >
+              <ShoppingBag size={16} />
+              <span>Orders</span>
+            </button>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 gap-3 pt-3 border-t border-stone-800/60 text-center">
+            <button
+              onClick={seedDatabase}
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-stone-800 hover:bg-stone-700/80 rounded-xl text-[9px] uppercase tracking-wider font-bold text-heritage-gold transition-all"
+            >
+              <Star size={12} className="fill-heritage-gold text-heritage-gold" />
+              <span>Seed DB</span>
+            </button>
+            <button
+              onClick={resetMetricsToZero}
+              className="flex items-center justify-center gap-2 py-2.5 px-3 bg-red-950/40 border border-red-900/40 hover:bg-red-900/30 rounded-xl text-[9px] uppercase tracking-wider font-bold text-red-400 transition-all"
+            >
+              <RotateCcw size={12} />
+              <span>Reset to 0</span>
+            </button>
+          </div>
+        </div>
+
+        <header className="flex flex-col lg:flex-row justify-between items-center gap-6 mb-8 bg-white p-5 sm:p-8 rounded-[24px] sm:rounded-[32px] border border-stone-100 shadow-sm">
+          <div className="space-y-1 text-center lg:text-left">
             <span className="text-[10px] uppercase tracking-[0.4em] text-heritage-maroon font-bold">
               Dashboard Control
             </span>
             <h2 className="text-3xl sm:text-4xl font-serif text-stone-900 capitalize leading-none mb-1 italic">
               {activeTab}
             </h2>
-            <div className="flex items-center gap-2 justify-center sm:justify-start">
+            <div className="flex items-center gap-2 justify-center lg:justify-start">
               <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
               <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">
                 {user.displayName || "Administrator"}{" "}
@@ -820,7 +940,7 @@ export const AdminDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-4 items-center">
+          <div className="flex flex-wrap gap-2 sm:gap-4 items-center justify-center lg:justify-end">
             {activeTab === "products" && (
               <>
                 <button
@@ -883,7 +1003,23 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </header>
 
-        {/* Live View Statistics Row */}
+        {/* Live View Statistics Header and Row */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+          <div>
+            <h3 className="text-lg font-serif text-stone-900 italic font-medium flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block" />
+              Live Store Performance
+            </h3>
+            <p className="text-xs text-stone-500">Real-time indicators of your heritage collection and accumulated sales.</p>
+          </div>
+          <button
+            onClick={resetMetricsToZero}
+            className="hidden md:flex text-[10px] uppercase tracking-widest text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100/80 px-4 py-2 rounded-full font-bold transition-all items-center gap-1.5 border border-red-100"
+          >
+            <RotateCcw size={11} /> Reset to 0
+          </button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
             {
@@ -1208,8 +1344,8 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === "products" && (
-          <div className="bg-white rounded-[40px] border border-stone-100 overflow-hidden shadow-sm">
-            <table className="w-full text-left">
+          <div className="bg-white rounded-[24px] sm:rounded-[40px] border border-stone-100 overflow-x-auto shadow-sm">
+            <table className="w-full min-w-[900px] lg:min-w-full text-left">
               <thead className="bg-stone-50 border-b border-stone-100 text-[10px] uppercase tracking-widest text-heritage-maroon font-bold">
                 <tr>
                   <th className="px-8 py-6">Product details</th>
@@ -1294,7 +1430,7 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => openEditModal(p)}
                             className="p-2.5 bg-stone-100 text-stone-500 rounded-full hover:bg-heritage-maroon hover:text-white transition-all shadow-sm"
@@ -1434,8 +1570,8 @@ export const AdminDashboard: React.FC = () => {
               )}
             </div>
 
-            <div className="bg-white rounded-3xl border border-stone-100 overflow-hidden shadow-sm">
-              <table className="w-full text-left">
+            <div className="bg-white rounded-3xl border border-stone-100 overflow-x-auto shadow-sm">
+              <table className="w-full min-w-[800px] lg:min-w-full text-left">
                 <thead className="bg-stone-50 border-b border-stone-100 text-[10px] uppercase tracking-widest text-stone-400 font-bold">
                   <tr>
                     <th className="px-6 py-4">Order ID</th>

@@ -186,7 +186,11 @@ export const ProductDetail: React.FC = () => {
 
         // If not found in live database (or blocked), check localized sandbox cache
         if (!foundProduct) {
-          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          const isDemo = sessionStorage.getItem("jaigo_demo_user")
+            ? JSON.parse(sessionStorage.getItem("jaigo_demo_user") || "{}")?.uid?.startsWith("demo-")
+            : false;
+          const productKey = isDemo ? "jaigo_sandbox_products" : "jaigo_live_products";
+          const storedProducts = localStorage.getItem(productKey);
           if (storedProducts) {
             try {
               const allProducts: Product[] = JSON.parse(storedProducts);

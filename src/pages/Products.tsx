@@ -42,30 +42,55 @@ export const Products: React.FC = () => {
         const isDemo = sessionStorage.getItem("jaigo_demo_user")
           ? JSON.parse(sessionStorage.getItem("jaigo_demo_user") || "{}")?.uid?.startsWith("demo-")
           : false;
+        const productKey = isDemo ? "jaigo_sandbox_products" : "jaigo_live_products";
 
         let allProducts: Product[] = [];
-        if (isDemo) {
-          const storedProducts = localStorage.getItem("jaigo_demo_products");
-          if (storedProducts) {
-            try {
-              allProducts = JSON.parse(storedProducts);
-            } catch {}
-          }
+        const storedProducts = localStorage.getItem(productKey);
+        
+        if (storedProducts) {
+          try {
+            allProducts = JSON.parse(storedProducts);
+          } catch {}
         }
 
-        if (allProducts.length === 0) {
-          const q = query(collection(db, colPath));
-          const snapshot = await getDocs(q);
-          if (!snapshot.empty) {
-            allProducts = snapshot.docs.map((doc) => ({
-              id: doc.id,
-              ...doc.data(),
-            })) as Product[];
-            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
-          } else {
-            const { MOCK_PRODUCTS } = await import("../constants");
-            allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
-            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+        // Fetch from firestore if not in demo mode
+        if (!isDemo) {
+          try {
+            const q = query(collection(db, colPath));
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+              allProducts = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              })) as Product[];
+              localStorage.setItem(productKey, JSON.stringify(allProducts));
+              localStorage.setItem("jaigo_products_initialized", "true");
+            } else {
+              // DB is empty. Only seed mock products on first-ever load.
+              const isInitialized = localStorage.getItem("jaigo_products_initialized");
+              if (!isInitialized) {
+                const { MOCK_PRODUCTS } = await import("../constants");
+                allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+                localStorage.setItem(productKey, JSON.stringify(allProducts));
+                localStorage.setItem("jaigo_products_initialized", "true");
+              } else {
+                allProducts = [];
+                localStorage.setItem(productKey, JSON.stringify([]));
+              }
+            }
+          } catch (dbError) {
+            console.warn("Firestore fetch error, falling back to local cache:", dbError);
+          }
+        } else {
+          // Demo/sandbox mode helper
+          if (allProducts.length === 0) {
+            const isInitialized = localStorage.getItem("jaigo_products_initialized");
+            if (!isInitialized) {
+              const { MOCK_PRODUCTS } = await import("../constants");
+              allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+              localStorage.setItem(productKey, JSON.stringify(allProducts));
+              localStorage.setItem("jaigo_products_initialized", "true");
+            }
           }
         }
 
@@ -76,17 +101,25 @@ export const Products: React.FC = () => {
         }
         setProducts(displayProducts);
       } catch (error) {
-        console.warn("DB Fetch failed, attempting local products list", error);
+        console.warn("Products load error, attempting local cache fallback", error);
+        const isDemo = sessionStorage.getItem("jaigo_demo_user")
+          ? JSON.parse(sessionStorage.getItem("jaigo_demo_user") || "{}")?.uid?.startsWith("demo-")
+          : false;
+        const productKey = isDemo ? "jaigo_sandbox_products" : "jaigo_live_products";
         let allProducts: Product[] = [];
         try {
-          const storedProducts = localStorage.getItem("jaigo_demo_products");
+          const storedProducts = localStorage.getItem(productKey);
           if (storedProducts) {
             allProducts = JSON.parse(storedProducts);
           }
           if (allProducts.length === 0) {
-            const { MOCK_PRODUCTS } = await import("../constants");
-            allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
-            localStorage.setItem("jaigo_demo_products", JSON.stringify(allProducts));
+            const isInitialized = localStorage.getItem("jaigo_products_initialized");
+            if (!isInitialized) {
+              const { MOCK_PRODUCTS } = await import("../constants");
+              allProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+              localStorage.setItem(productKey, JSON.stringify(allProducts));
+              localStorage.setItem("jaigo_products_initialized", "true");
+            }
           }
           let displayProducts = allProducts;
           if (cat && cat !== "All") {

@@ -34,7 +34,7 @@ export const About: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.8 }}
-            className="uppercase tracking-[0.6em] text-xs md:text-sm text-heritage-gold font-black drop-shadow-md"
+            className="uppercase tracking-[0.6em] text-xs md:text-sm text-heritage-gold-light font-black drop-shadow-md"
           >
             A Legacy of Tamil Nadu Heritage
           </motion.p>

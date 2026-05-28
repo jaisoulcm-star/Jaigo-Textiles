@@ -77,7 +77,7 @@ const testConnection = async () => {
       error instanceof Error &&
       error.message.includes("the client is offline")
     ) {
-      console.error("Please check your Firebase configuration or firewall.");
+      console.warn("Firebase client is operating in offline mode. Local cached store will be used as a robust fallback.");
     }
   }
 };

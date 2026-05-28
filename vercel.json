@@ -1,0 +1,10 @@
+{
+  "experimentalServices": {
+    "web": {
+      "src": ".",
+      "port": 3000,
+      "buildCommand": "npm run build",
+      "runCommand": "npm run start"
+    }
+  }
+}
