@@ -74,8 +74,17 @@ export const Products: React.FC = () => {
                 localStorage.setItem(productKey, JSON.stringify(allProducts));
                 localStorage.setItem("jaigo_products_initialized", "true");
               } else {
-                allProducts = [];
-                localStorage.setItem(productKey, JSON.stringify([]));
+                // Keep local cache if exist, otherwise set empty
+                const cached = localStorage.getItem(productKey);
+                if (cached) {
+                  try {
+                    allProducts = JSON.parse(cached);
+                  } catch {
+                    allProducts = [];
+                  }
+                } else {
+                  allProducts = [];
+                }
               }
             }
           } catch (dbError) {

@@ -22,6 +22,7 @@ import { useAuth } from "../contexts/AuthContext";
 export const Header: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = React.useState(false);
   const [isVisible, setIsVisible] = React.useState(true);
   const [lastScrollY, setLastScrollY] = React.useState(0);
   const { cart } = useCart();
@@ -112,25 +113,88 @@ export const Header: React.FC = () => {
                   </span>
                 </div>
               )}
-              <button
-                onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                  } else {
-                    if (window.confirm("Do you want to logout?")) {
-                      logout();
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      navigate("/login");
+                    } else {
+                      setIsUserMenuOpen(!isUserMenuOpen);
                     }
+                  }}
+                  className={`p-2 rounded-full transition-all ${user ? "bg-heritage-maroon/5 text-heritage-maroon hover:bg-heritage-maroon/10" : "text-stone-500 hover:text-heritage-maroon"}`}
+                  title={
+                    user
+                      ? `Logged in as ${user.displayName || user.email}. Click for options`
+                      : "Login"
                   }
-                }}
-                className={`p-2 rounded-full transition-all ${user ? "bg-heritage-maroon/5 text-heritage-maroon" : "text-stone-500 hover:text-heritage-maroon"}`}
-                title={
-                  user
-                    ? `Logged in as ${user.displayName || user.email}. Click to Logout`
-                    : "Login"
-                }
-              >
-                <User size={20} strokeWidth={1.5} />
-              </button>
+                >
+                  <User size={20} strokeWidth={1.5} />
+                </button>
+
+                {/* Custom popover dropdown menu */}
+                {user && isUserMenuOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40 bg-transparent" 
+                      onClick={() => setIsUserMenuOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-stone-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="px-4 py-3 border-b border-stone-100">
+                        <p className="text-[9px] text-stone-400 uppercase tracking-wider font-extrabold">Active Account</p>
+                        <p className="text-sm font-semibold text-stone-800 truncate mt-1">
+                          {user.displayName || "Artisan Representative"}
+                        </p>
+                        <p className="text-xs text-stone-500 truncate mt-0.5">
+                          {user.email}
+                        </p>
+                        <div className="mt-2 flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                            {isAdmin ? "Admin Member" : "Standard Partner"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="py-1">
+                        {isAdmin && (
+                          <button
+                            onClick={() => {
+                              setIsUserMenuOpen(false);
+                              navigate("/admin");
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 hover:text-heritage-maroon transition-all"
+                          >
+                            Go to Admin Dashboard
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            navigate("/wishlist");
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-xs font-semibold text-stone-700 hover:bg-stone-50 hover:text-heritage-maroon transition-all"
+                        >
+                          My Wishlist
+                        </button>
+                      </div>
+
+                      <div className="border-t border-stone-100 pt-1 mt-1">
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            logout();
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-all flex items-center justify-between"
+                        >
+                          <span>Sign Out / Log Out</span>
+                          <span className="text-[10px] font-normal text-red-400">Exit</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
               <Link
                 to="/cart"
                 className="relative p-2 sm:p-2 text-stone-500 hover:text-heritage-maroon transition-colors pr-0"
@@ -233,11 +297,7 @@ export const Header: React.FC = () => {
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
-                        if (
-                          window.confirm("Are you sure you want to sign out?")
-                        ) {
-                          logout();
-                        }
+                        logout();
                       }}
                       className="w-full flex items-center justify-between group bg-red-50 text-red-600 px-6 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] border border-red-100"
                     >

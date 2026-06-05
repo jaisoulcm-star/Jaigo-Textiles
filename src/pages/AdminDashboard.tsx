@@ -212,7 +212,7 @@ export const AdminDashboard: React.FC = () => {
       setProducts(localProducts);
 
       let localOrders: Order[] = [];
-      const storedOrders = localStorage.getItem(orderKey);
+      const storedOrders = localStorage.getItem(orderKey) || (isDemo ? localStorage.getItem("jaigo_demo_orders") : null);
       if (storedOrders) {
         try {
           localOrders = JSON.parse(storedOrders);
@@ -290,21 +290,50 @@ export const AdminDashboard: React.FC = () => {
       const pSnapshot = await getDocs(
         query(collection(db, "products"), orderBy("createdAt", "desc")),
       );
-      const liveProducts = pSnapshot.docs.map((doc) => ({
+      let liveProducts = pSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Product[];
+
+      if (liveProducts.length === 0) {
+        const isInitialized = localStorage.getItem("jaigo_products_initialized");
+        if (!isInitialized) {
+          try {
+            const { MOCK_PRODUCTS } = await import("../constants");
+            liveProducts = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
+            localStorage.setItem(productKey, JSON.stringify(liveProducts));
+            localStorage.setItem("jaigo_products_initialized", "true");
+          } catch {}
+        } else {
+          const cached = localStorage.getItem(productKey);
+          if (cached) {
+            try { liveProducts = JSON.parse(cached); } catch {}
+          }
+        }
+      } else {
+        localStorage.setItem(productKey, JSON.stringify(liveProducts));
+        localStorage.setItem("jaigo_products_initialized", "true");
+      }
       setProducts(liveProducts);
-      localStorage.setItem(productKey, JSON.stringify(liveProducts));
-      localStorage.setItem("jaigo_products_initialized", "true");
 
       const oSnapshot = await getDocs(
         query(collection(db, "orders"), orderBy("createdAt", "desc")),
       );
-      const liveOrders = oSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[];
+      let liveOrders = oSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[];
+
+      if (liveOrders.length === 0) {
+        const isOrdersInitialized = localStorage.getItem("jaigo_orders_initialized");
+        if (isOrdersInitialized) {
+          const cached = localStorage.getItem(orderKey);
+          if (cached) {
+            try { liveOrders = JSON.parse(cached); } catch {}
+          }
+        }
+      } else {
+        localStorage.setItem(orderKey, JSON.stringify(liveOrders));
+        localStorage.setItem("jaigo_orders_initialized", "true");
+      }
       setOrders(liveOrders);
-      localStorage.setItem(orderKey, JSON.stringify(liveOrders));
-      localStorage.setItem("jaigo_orders_initialized", "true");
     } catch (error: any) {
       console.error("Error fetching admin data:", error);
       if (error.message?.includes("index")) {
@@ -509,12 +538,14 @@ export const AdminDashboard: React.FC = () => {
     try {
       if (isDemo) {
         let localOrders: Order[] = [];
-        const storedOrders = localStorage.getItem("jaigo_demo_orders");
+        const storedOrders = localStorage.getItem("jaigo_sandbox_orders") || localStorage.getItem("jaigo_demo_orders");
         if (storedOrders) {
           try { localOrders = JSON.parse(storedOrders); } catch {}
         }
         localOrders = localOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
-        localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
+        const updatedOrders = JSON.stringify(localOrders);
+        localStorage.setItem("jaigo_sandbox_orders", updatedOrders);
+        localStorage.setItem("jaigo_demo_orders", updatedOrders);
         showToast(`Order #${orderId.slice(0, 6)} updated successfully`);
         fetchData();
       } else {
@@ -525,12 +556,14 @@ export const AdminDashboard: React.FC = () => {
         } catch (error: any) {
           if (error?.code === "permission-denied") {
             let localOrders: Order[] = [];
-            const storedOrders = localStorage.getItem("jaigo_demo_orders");
+            const storedOrders = localStorage.getItem("jaigo_sandbox_orders") || localStorage.getItem("jaigo_demo_orders");
             if (storedOrders) {
               try { localOrders = JSON.parse(storedOrders); } catch {}
             }
             localOrders = localOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
-            localStorage.setItem("jaigo_demo_orders", JSON.stringify(localOrders));
+            const updatedOrders = JSON.stringify(localOrders);
+            localStorage.setItem("jaigo_sandbox_orders", updatedOrders);
+            localStorage.setItem("jaigo_demo_orders", updatedOrders);
             showToast(`Order #${orderId.slice(0, 6)} updated successfully`);
             fetchData();
           } else {

@@ -59,6 +59,7 @@ export const Checkout: React.FC = () => {
   // Bank transfer states
   const [bankTxRef, setBankTxRef] = useState("");
   const [copiedBankText, setCopiedBankText] = useState(false);
+  const [copiedGpay, setCopiedGpay] = useState(false);
   const [formErrors, setFormErrors] = useState<string | null>(null);
 
   // UPI Simulation State
@@ -208,14 +209,16 @@ export const Checkout: React.FC = () => {
 
     // Mirror to local storage demo orders instantly for the sandbox dashboard
     try {
-      const storedOrders = localStorage.getItem("jaigo_demo_orders");
+      const storedOrders = localStorage.getItem("jaigo_sandbox_orders") || localStorage.getItem("jaigo_demo_orders");
       const existingOrders = storedOrders ? JSON.parse(storedOrders) : [];
       const newOrder = {
         ...orderPayload,
         id: "ord-" + Date.now().toString(),
         createdAt: new Date().toISOString()
       };
-      localStorage.setItem("jaigo_demo_orders", JSON.stringify([newOrder, ...existingOrders]));
+      const updatedOrders = JSON.stringify([newOrder, ...existingOrders]);
+      localStorage.setItem("jaigo_sandbox_orders", updatedOrders);
+      localStorage.setItem("jaigo_demo_orders", updatedOrders);
     } catch (e) {
       console.warn("Could not mirror order to fallback local storage", e);
     }
@@ -328,7 +331,7 @@ export const Checkout: React.FC = () => {
   }
 
   // Generate appropriate deep-link for Scan UPI QR Code using mock details
-  const upiDeepLink = `upi://pay?pa=jaigotextiles@okaxis&pn=Jaigo%20Textiles&am=${total}&cu=INR&tn=Order%20Payment`;
+  const upiDeepLink = `upi://pay?pa=9944763671@okaxis&pn=Jaigo%20Textiles&am=${total}&cu=INR&tn=Order%20Payment`;
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-12 md:py-20 font-sans text-stone-800">
@@ -640,6 +643,28 @@ export const Checkout: React.FC = () => {
                             {app.name.split(" ")[0]}
                           </button>
                         ))}
+                      </div>
+
+                      {/* GPay Direct Number Informational Banner */}
+                      <div className="p-4 bg-amber-50/40 rounded-2xl border border-amber-200/50 flex items-center justify-between gap-3 text-stone-800">
+                        <div className="space-y-0.5">
+                          <span className="text-[9px] uppercase font-bold tracking-widest text-[#c4a456] block">Direct GPay / UPI Number</span>
+                          <p className="text-sm font-mono font-bold text-stone-900 flex items-center gap-1.5">
+                            9944763671
+                          </p>
+                          <p className="text-[9px] text-stone-500 font-medium">Registered to: Jaigo Textiles / +91 9944763671</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText("9944763671");
+                            setCopiedGpay(true);
+                            setTimeout(() => setCopiedGpay(false), 2000);
+                          }}
+                          className="px-3.5 py-2 bg-white hover:bg-stone-50 text-stone-700 border border-stone-200 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs"
+                        >
+                          <Copy size={11} /> {copiedGpay ? "Copied!" : "Copy Number"}
+                        </button>
                       </div>
 
                       {/* Manual UPI ID Input */}

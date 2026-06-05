@@ -12,16 +12,32 @@ import {
 import firebaseConfigJson from "../firebase-applet-config.json";
 
 // Dynamic configuration matching both local development and Netlify environment variables
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || firebaseConfigJson.measurementId || "",
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId || "",
+const getCleanValue = (envVal: any, jsonVal: any) => {
+  if (!envVal) return jsonVal;
+  const cleaned = String(envVal).trim().replace(/['"]/g, "");
+  if (
+    cleaned === "" ||
+    cleaned.startsWith("your-") ||
+    cleaned === "undefined" ||
+    cleaned === "null"
+  ) {
+    return jsonVal;
+  }
+  return cleaned;
 };
+
+const firebaseConfig = {
+  apiKey: getCleanValue(import.meta.env.VITE_FIREBASE_API_KEY, firebaseConfigJson.apiKey),
+  authDomain: getCleanValue(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN, firebaseConfigJson.authDomain),
+  projectId: getCleanValue(import.meta.env.VITE_FIREBASE_PROJECT_ID, firebaseConfigJson.projectId),
+  storageBucket: getCleanValue(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET, firebaseConfigJson.storageBucket),
+  messagingSenderId: getCleanValue(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID, firebaseConfigJson.messagingSenderId),
+  appId: getCleanValue(import.meta.env.VITE_FIREBASE_APP_ID, firebaseConfigJson.appId),
+  measurementId: getCleanValue(import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, firebaseConfigJson.measurementId || ""),
+  firestoreDatabaseId: getCleanValue(import.meta.env.VITE_FIREBASE_DATABASE_ID, firebaseConfigJson.firestoreDatabaseId || ""),
+};
+
+console.log("Firebase Config Active - Project ID:", firebaseConfig.projectId, "API Key: starts with", firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 5) : "none", "length:", firebaseConfig.apiKey ? firebaseConfig.apiKey.length : 0);
 
 const app = initializeApp(firebaseConfig);
 
