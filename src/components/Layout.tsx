@@ -1,7 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { Header, Footer } from "./Navigation";
-import { ChatBot } from "./ChatBot";
 import { motion, AnimatePresence } from "motion/react";
 import { MessageCircle } from "lucide-react";
 
@@ -35,8 +34,6 @@ export const Layout: React.FC = () => {
       >
         <MessageCircle size={24} fill="currentColor" />
       </motion.a>
-
-      <ChatBot />
     </div>
   );
 };

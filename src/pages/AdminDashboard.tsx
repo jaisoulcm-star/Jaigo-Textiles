@@ -287,13 +287,26 @@ export const AdminDashboard: React.FC = () => {
     }
 
     try {
-      const pSnapshot = await getDocs(
-        query(collection(db, "products"), orderBy("createdAt", "desc")),
-      );
-      let liveProducts = pSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Product[];
+      const timeoutPromise = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms));
+
+      // Fetch products
+      let liveProducts: Product[] = [];
+      try {
+        const qProd = query(collection(db, "products"));
+        const pSnapshot = await Promise.race([getDocs(qProd), timeoutPromise(1500)]) as any;
+        liveProducts = pSnapshot.docs.map((doc: any) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Product[];
+        // Sort in memory
+        liveProducts.sort((a: any, b: any) => {
+          const timeA = a.createdAt?.seconds || (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0) || 0;
+          const timeB = b.createdAt?.seconds || (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0) || 0;
+          return timeB - timeA;
+        });
+      } catch (e) {
+        console.warn("Firestore products fetch timed out or failed in admin view, using cached/mock fallback", e);
+      }
 
       if (liveProducts.length === 0) {
         const isInitialized = localStorage.getItem("jaigo_products_initialized");
@@ -316,10 +329,21 @@ export const AdminDashboard: React.FC = () => {
       }
       setProducts(liveProducts);
 
-      const oSnapshot = await getDocs(
-        query(collection(db, "orders"), orderBy("createdAt", "desc")),
-      );
-      let liveOrders = oSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Order[];
+      // Fetch orders
+      let liveOrders: Order[] = [];
+      try {
+        const qOrd = query(collection(db, "orders"));
+        const oSnapshot = await Promise.race([getDocs(qOrd), timeoutPromise(1500)]) as any;
+        liveOrders = oSnapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() })) as Order[];
+        // Sort in memory
+        liveOrders.sort((a: any, b: any) => {
+          const timeA = a.createdAt?.seconds || (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0) || 0;
+          const timeB = b.createdAt?.seconds || (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0) || 0;
+          return timeB - timeA;
+        });
+      } catch (e) {
+        console.warn("Firestore orders fetch timed out or failed in admin view, using cached fallback", e);
+      }
 
       if (liveOrders.length === 0) {
         const isOrdersInitialized = localStorage.getItem("jaigo_orders_initialized");

@@ -53,11 +53,12 @@ export const Products: React.FC = () => {
           } catch {}
         }
 
-        // Fetch from firestore if not in demo mode
+        // Fetch from firestore if not in demo mode with timeout
         if (!isDemo) {
           try {
             const q = query(collection(db, colPath));
-            const snapshot = await getDocs(q);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1200));
+            const snapshot = await Promise.race([getDocs(q), timeoutPromise]) as any;
             if (!snapshot.empty) {
               allProducts = snapshot.docs.map((doc) => ({
                 id: doc.id,

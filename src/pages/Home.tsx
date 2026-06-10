@@ -66,15 +66,23 @@ export const Home: React.FC = () => {
         if (!isDemo) {
           try {
             const q = query(
-              collection(db, "products"),
-              orderBy("createdAt", "desc"),
+              collection(db, "products")
             );
-            const snapshot = await getDocs(q);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1200));
+            const snapshot = await Promise.race([getDocs(q), timeoutPromise]) as any;
             if (!snapshot.empty) {
               allProducts = snapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
               })) as Product[];
+              
+              // Sort by createdAt desc in memory
+              allProducts.sort((a: any, b: any) => {
+                const timeA = a.createdAt?.seconds || (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0) || 0;
+                const timeB = b.createdAt?.seconds || (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0) || 0;
+                return timeB - timeA;
+              });
+
               localStorage.setItem(productKey, JSON.stringify(allProducts));
               localStorage.setItem("jaigo_products_initialized", "true");
             } else {

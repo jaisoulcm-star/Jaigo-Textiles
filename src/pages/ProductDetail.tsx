@@ -119,8 +119,7 @@ export const ProductDetail: React.FC = () => {
     if (!id) return;
     const q = query(
       collection(db, "reviews"),
-      where("productId", "==", id),
-      orderBy("createdAt", "desc")
+      where("productId", "==", id)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -128,9 +127,17 @@ export const ProductDetail: React.FC = () => {
         id: doc.id,
         ...doc.data(),
       })) as Review[];
+      
+      // Sort in memory to avoid index-required errors in Firebase
+      reviewsData.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.seconds || (a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0) || 0;
+        const timeB = b.createdAt?.seconds || (b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0) || 0;
+        return timeB - timeA;
+      });
+
       setReviews(reviewsData);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, "reviews");
+      console.warn("Reviews load fallback error (likely missing index in sandbox):", error);
     });
 
     return () => unsubscribe();
@@ -173,10 +180,11 @@ export const ProductDetail: React.FC = () => {
       try {
         let foundProduct: Product | undefined;
 
-        // Try to fetch from live Firestore database first
+        // Try to fetch from live Firestore database first with timeout
         try {
           const docRef = doc(db, "products", id);
-          const snapshot = await getDoc(docRef);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1200));
+          const snapshot = await Promise.race([getDoc(docRef), timeoutPromise]) as any;
           if (snapshot.exists()) {
             foundProduct = { id: snapshot.id, ...snapshot.data() } as Product;
           }
